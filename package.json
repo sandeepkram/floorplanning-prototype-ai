@@ -7,7 +7,7 @@
     "start": "node dist/server.js",
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "test": "jest --runInBand --passWithNoTests""
+    "test": "jest --runInBand --passWithNoTests"
   },
   "dependencies": {
     "cors": "^2.8.5",
