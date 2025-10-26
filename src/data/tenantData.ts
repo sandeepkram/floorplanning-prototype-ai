@@ -1,3 +1,7 @@
+// ---------------------------------------------------------------------------
+// V1 Base Tenant Data (from original version)
+// ---------------------------------------------------------------------------
+
 export type User = { id: number; name: string; role: string };
 export type Account = { id: number; type: string; balance: number };
 export type Product = { id: number; sku: string; name: string; price: number };
@@ -52,3 +56,46 @@ export const tenants: Tenants = {
 };
 
 export const validTenants = Object.keys(tenants);
+
+// ---------------------------------------------------------------------------
+// V5 Delta Additive Section: Pre-seeded occupancy events for hybrid store
+// ---------------------------------------------------------------------------
+
+import { OccupancyEvent } from "../models/types";
+
+// Pre-seeded lightweight sample events for each tenant (never empty)
+export const seedEvents: OccupancyEvent[] = [
+  // 🏦 Banking domain tenant
+  {
+    tenant_id: "bankcorp",
+    office_id: "blr_finops",
+    room_id: "conf_room_A",
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    present: true
+  },
+  {
+    tenant_id: "bankcorp",
+    office_id: "blr_finops",
+    room_id: "conf_room_A",
+    timestamp: new Date().toISOString(),
+    present: false
+  },
+
+  // 🛍 Retail tenant
+  {
+    tenant_id: "retailx",
+    office_id: "nyc_store_ops",
+    room_id: "backroom_01",
+    timestamp: new Date().toISOString(),
+    present: true
+  },
+
+  // 🏥 Healthcare tenant
+  {
+    tenant_id: "healthplus",
+    office_id: "hyd_care_hq",
+    room_id: "lab_4C",
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    present: true
+  }
+];

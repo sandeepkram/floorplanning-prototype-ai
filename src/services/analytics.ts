@@ -9,7 +9,7 @@ function withinDays(dateIso: string, days: number): boolean {
 
 export function utilizationLastNDays(tenant_id: string, room_id: string, days: number): UtilizationResult {
   const events = getRoomEvents(tenant_id, room_id).filter(e => withinDays(e.timestamp, days));
-  const avg = events.length ? events.reduce((acc, e) => acc + e.people_count, 0) / events.length : 0;
+  const avg = events.length ? events.reduce((acc, e) => acc + (e.people_count ?? 0), 0) / events.length : 0;
   return {
     tenant_id,
     room_id,
@@ -31,8 +31,8 @@ export function recommendUnderutilizedRooms(tenant_id: string, office_id: string
     const allEvents = getRoomEvents(tenant_id, room);
     const last7 = allEvents.filter(e => withinDays(e.timestamp, 7));
     const last30 = allEvents.filter(e => withinDays(e.timestamp, 30));
-    const avg7 = last7.length ? last7.reduce((a, e) => a + e.people_count, 0) / last7.length : 0;
-    const max30 = last30.length ? Math.max(...last30.map(e => e.people_count)) : 0;
+    const avg7 = last7.length ? last7.reduce((a, e) => a + (e.people_count ?? 0), 0) / last7.length : 0;
+    const max30 = last30.length ? Math.max(...last30.map(e => e.people_count ?? 0)) : 0;
     const util = max30 > 0 ? avg7 / max30 : 0;
     results.push({ room_id: room, utilization: Number(util.toFixed(2)), avg7d: Number(avg7.toFixed(2)), max30d: max30, samples: last7.length });
   }

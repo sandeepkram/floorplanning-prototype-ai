@@ -1,6 +1,7 @@
 import express from 'express';
 import { eventSchema } from '../utils/validation.js';
 import { addEvent } from '../services/dataStore.js';
+import { store } from "../data/storefactory";
 
 const router = express.Router();
 

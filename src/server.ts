@@ -6,10 +6,17 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import YAML from 'yamljs';
 import swaggerUi from 'swagger-ui-express';
+import { createStore } from "./data/storefactory";
 
 import eventsRoute from './routes/events.js';
 import utilizationRoute from './routes/utilization.js';
 import recommendRoute from './routes/recommend.js';
+
+const store = createStore(); // defaults to SQLite
+
+if ("seed" in store && typeof store.seed === "function") {
+  (store as any).seed();
+}
 
 const app = express();
 
