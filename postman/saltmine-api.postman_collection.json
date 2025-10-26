@@ -1,0 +1,181 @@
+{
+  "info": {
+    "name": "Saltmine Prototype API \u2014 V1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET Users (bankcorp)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/bankcorp/users",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "bankcorp",
+            "users"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST User (header tenant: bankcorp)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-tenant-id",
+            "value": "bankcorp"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\": \"New User\", \"role\": \"Analyst\"}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/users",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "users"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET Accounts (bankcorp)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/bankcorp/accounts",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "bankcorp",
+            "accounts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST Account (bankcorp)",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"type\": \"Savings\", \"balance\": 999}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/bankcorp/accounts",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "bankcorp",
+            "accounts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET Products (retailx)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/retailx/products",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "retailx",
+            "products"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST Product (retailx)",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"sku\": \"SKU-010\", \"name\": \"Charger\", \"price\": 499}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/retailx/products",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "retailx",
+            "products"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET Patients (healthplus)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8080/api/healthplus/patients",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "healthplus",
+            "patients"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST Patient (healthplus)",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\": \"Ravi\", \"condition\": \"COPD\"}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/healthplus/patients",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "healthplus",
+            "patients"
+          ]
+        }
+      }
+    }
+  ]
+}

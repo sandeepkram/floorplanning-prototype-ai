@@ -1,0 +1,77 @@
+openapi: 3.0.3
+info:
+  title: Saltmine Prototype API
+  version: 0.1.0
+  description: >
+    Simplified multi-tenant API for occupancy events and utilization.
+    **Demo only** — contains production upgrade stubs in comments.
+servers:
+  - url: http://localhost:8080
+paths:
+  /event:
+    post:
+      summary: Ingest an occupancy event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OccupancyEvent'
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Invalid payload
+  /utilization/{tenant_id}/{room_id}:
+    get:
+      summary: Average utilization for the past 7 days
+      parameters:
+        - in: path
+          name: tenant_id
+          schema: { type: string }
+          required: true
+        - in: path
+          name: room_id
+          schema: { type: string }
+          required: true
+      responses:
+        '200':
+          description: Utilization result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UtilizationResult'
+  /recommend/{tenant_id}/{office_id}:
+    get:
+      summary: Recommend underutilized rooms in an office (heuristic)
+      parameters:
+        - in: path
+          name: tenant_id
+          schema: { type: string }
+          required: true
+        - in: path
+          name: office_id
+          schema: { type: string }
+          required: true
+      responses:
+        '200':
+          description: Recommendation results
+components:
+  schemas:
+    OccupancyEvent:
+      type: object
+      properties:
+        tenant_id: { type: string }
+        room_id: { type: string }
+        timestamp: { type: string, format: date-time }
+        people_count: { type: integer, minimum: 0 }
+        office_id: { type: string, nullable: true, description: "Optional for demo; recommended to be required in production" }
+      required: [tenant_id, room_id, timestamp, people_count]
+    UtilizationResult:
+      type: object
+      properties:
+        tenant_id: { type: string }
+        room_id: { type: string }
+        window_days: { type: integer }
+        average_people: { type: number }
+        samples: { type: integer }

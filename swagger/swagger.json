@@ -1,0 +1,406 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Saltmine Prototype API - V1 Baseline",
+    "version": "1.0.0",
+    "description": "Additive multi-tenant samples with seeded data."
+  },
+  "tags": [
+    {
+      "name": "Tenants"
+    }
+  ],
+  "paths": {
+    "/api/{tenantId}/users": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Get users",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "bankcorp": {
+                    "value": {
+                      "tenantId": "bankcorp",
+                      "entity": "users",
+                      "data": [
+                        {
+                          "id": 1,
+                          "name": "Alice",
+                          "role": "Relationship Manager"
+                        },
+                        {
+                          "id": 2,
+                          "name": "Raj",
+                          "role": "Credit Analyst"
+                        }
+                      ]
+                    }
+                  },
+                  "retailx": {
+                    "value": {
+                      "tenantId": "retailx",
+                      "entity": "users",
+                      "data": [
+                        {
+                          "id": 1,
+                          "name": "Priya",
+                          "role": "Store Manager"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bankcorp",
+                "retailx",
+                "healthplus"
+              ]
+            }
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Create user (path tenant)",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bankcorp",
+                "retailx",
+                "healthplus"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "examples": {
+                "bankcorp": {
+                  "value": {
+                    "name": "Nikhil",
+                    "role": "Analyst"
+                  }
+                },
+                "retailx": {
+                  "value": {
+                    "name": "Asha",
+                    "role": "Associate"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "post": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Create user (header tenant)",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bankcorp",
+                "retailx",
+                "healthplus"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "examples": {
+                "healthplus": {
+                  "value": {
+                    "name": "Leela",
+                    "role": "Nurse"
+                  }
+                },
+                "bankcorp": {
+                  "value": {
+                    "name": "Tom",
+                    "role": "Auditor"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{tenantId}/accounts": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Get accounts (bankcorp)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bankcorp"
+              ]
+            }
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Create account (bankcorp)",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bankcorp"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "examples": {
+                "ex1": {
+                  "value": {
+                    "type": "Savings",
+                    "balance": 1000
+                  }
+                },
+                "ex2": {
+                  "value": {
+                    "type": "Loan",
+                    "balance": -250000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{tenantId}/products": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Get products (retailx)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "retailx"
+              ]
+            }
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Create product (retailx)",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "retailx"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "examples": {
+                "ex1": {
+                  "value": {
+                    "sku": "SKU-010",
+                    "name": "Charger",
+                    "price": 499
+                  }
+                },
+                "ex2": {
+                  "value": {
+                    "sku": "SKU-011",
+                    "name": "Marker",
+                    "price": 49
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{tenantId}/patients": {
+      "get": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Get patients (healthplus)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "examples": {}
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "healthplus"
+              ]
+            }
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Tenants"
+        ],
+        "summary": "Create patient (healthplus)",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "healthplus"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "examples": {
+                "ex1": {
+                  "value": {
+                    "name": "Ravi",
+                    "condition": "COPD"
+                  }
+                },
+                "ex2": {
+                  "value": {
+                    "name": "Isha",
+                    "condition": "Arthritis"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

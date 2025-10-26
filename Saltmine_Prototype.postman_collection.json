@@ -1,0 +1,95 @@
+{
+  "info": {
+    "name": "Saltmine Prototype",
+    "_postman_id": "d2cfb6b0-6dd5-4b0f-9d4c-000000000000",
+    "description": "Postman collection for Saltmine Prototype API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/health",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Ingest Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenant_id\": \"bank123\",\n  \"room_id\": \"confA\",\n  \"timestamp\": \"2025-10-01T10:00:00Z\",\n  \"people_count\": 5,\n  \"office_id\": \"blr-hq\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/event",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "event"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Utilization (7d)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/utilization/bank123/confA",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "utilization",
+            "bank123",
+            "confA"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Recommend Underutilized",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/recommend/bank123/blr-hq",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "recommend",
+            "bank123",
+            "blr-hq"
+          ]
+        }
+      }
+    }
+  ]
+}
