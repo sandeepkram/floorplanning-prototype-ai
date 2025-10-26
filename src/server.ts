@@ -33,6 +33,12 @@ app.use('/', recommendRoute);
 // Health endpoint
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+// Root route
+app.get('/', (_req, res) => {
+  res.send('✅ Saltmine Prototype API is running. Visit /api-docs for Swagger UI.');
+});
+
+
 // PRODUCTION UPGRADE STUBS:
 // - Add OIDC/JWT auth middleware + RBAC checks.
 // - Add rate-limiting and request validation at the edge (API Gateway).
