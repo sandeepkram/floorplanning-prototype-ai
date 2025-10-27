@@ -1,6 +1,6 @@
 // src/data/storefactory.ts
-import { SqliteStore } from "./sqliteStore";
-import { InMemoryStore } from "./v5Store"; // will exist after Phase 2
+import { SqliteStore } from "./sqliteStore.js";
+import { InMemoryStore } from "./v5Store.js"; // will exist after Phase 2
 export type StoreMode = "sqlite" | "memory";
 
 // Default: SQLite

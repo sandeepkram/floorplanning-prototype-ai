@@ -1,4 +1,4 @@
-import { tenants, validTenants, TenantData } from "../data/tenantData";
+import { tenants, validTenants, TenantData } from "../data/tenantData.js";
 
 export function getTenantId(pathTenant?: string, headerTenant?: string): string {
   const candidate = pathTenant || headerTenant;

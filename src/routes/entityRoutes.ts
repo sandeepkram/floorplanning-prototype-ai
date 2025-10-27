@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { getTenantId, getEntitySlice, insertEntityRecord } from "../utils/dataStore";
+import { getTenantId, getEntitySlice, insertEntityRecord } from "../utils/dataStore.js";
 
 const router = express.Router();
 

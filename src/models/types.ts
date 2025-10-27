@@ -19,3 +19,14 @@ export interface UtilizationResult {
   average_people: number;
   samples: number;
 }
+
+// ---- V5: user context for role/region filtering ----
+export type Role = "Admin" | "Analyst" | "Viewer";
+export type Region = string;
+
+export interface UserContext {
+  tenantId: string;
+  userId: string;
+  role: Role;
+  region: Region;
+}

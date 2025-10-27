@@ -50,7 +50,7 @@ describe('API', () => {
     }).expect(201);
 
     const res = await request(app).get('/recommend/bank123/blr-hq').expect(200);
-    expect(res.body.recommendations).toBeDefined();
-    expect(Array.isArray(res.body.recommendations)).toBe(true);
+    expect(res.body.underutilized_rooms).toBeDefined();
+    expect(Array.isArray(res.body.underutilized_rooms)).toBe(true);
   });
 });
