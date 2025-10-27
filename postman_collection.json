@@ -1,95 +1,980 @@
 {
   "info": {
-    "name": "Saltmine Prototype",
-    "_postman_id": "d2cfb6b0-6dd5-4b0f-9d4c-000000000000",
-    "description": "Postman collection for Saltmine Prototype API",
+    "name": "Saltmine Prototype API \u2013 V5 (SQLite + RBAC + NLQ)",
+    "_postman_id": "55cc5b45-89a1-4eb7-a5c2-b62599268e7d",
+    "description": "Comprehensive Postman collection for the Saltmine Prototype API V5 (SQLite default, optional In-Memory, lightweight RBAC, NLQ /query). Includes examples and test scripts.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "render_url",
+      "value": "https://saltmine-prototype.onrender.com",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "bankcorp",
+      "type": "string"
+    },
+    {
+      "key": "office_id",
+      "value": "blr_finops",
+      "type": "string"
+    },
+    {
+      "key": "room_id",
+      "value": "conf_A",
+      "type": "string"
+    },
+    {
+      "key": "role",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "region",
+      "value": "IN",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Defaults to local URL; edit variables to use your Render deployment.",
+          "pm.collectionVariables.set('url', pm.variables.get('base_url'));"
+        ]
+      }
+    }
+  ],
   "item": [
     {
-      "name": "Health",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:8080/health",
-          "protocol": "http",
-          "host": [
-            "localhost"
+      "name": "Events",
+      "item": [
+        {
+          "name": "POST /events",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "events"
+              ]
+            },
+            "description": "Create an occupancy event (canonical endpoint).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"room_id\": \"{{room_id}}\",\n  \"timestamp\": \"2025-01-01T10:00:00Z\",\n  \"people_count\": 3,\n  \"office_id\": \"{{office_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
           ],
-          "port": "8080",
-          "path": [
-            "health"
+          "response": [
+            {
+              "name": "Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/events",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "events"
+                  ]
+                },
+                "description": "Create an occupancy event (canonical endpoint).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"room_id\": \"{{room_id}}\",\n  \"timestamp\": \"2025-01-01T10:00:00Z\",\n  \"people_count\": 3,\n  \"office_id\": \"{{office_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true\n}"
+            }
           ]
-        }
-      }
-    },
-    {
-      "name": "Ingest Event",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"tenant_id\": \"bank123\",\n  \"room_id\": \"confA\",\n  \"timestamp\": \"2025-10-01T10:00:00Z\",\n  \"people_count\": 5,\n  \"office_id\": \"blr-hq\"\n}"
         },
-        "url": {
-          "raw": "http://localhost:8080/event",
-          "protocol": "http",
-          "host": [
-            "localhost"
+        {
+          "name": "POST /event  (compat alias used by tests)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/event",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "event"
+              ]
+            },
+            "description": "Compatibility alias: prefer POST /events in production.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"room_id\": \"{{room_id}}\",\n  \"timestamp\": \"2025-01-01T10:05:00Z\",\n  \"people_count\": 2,\n  \"office_id\": \"{{office_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
           ],
-          "port": "8080",
-          "path": [
-            "event"
+          "response": [
+            {
+              "name": "Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/event",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "event"
+                  ]
+                },
+                "description": "Compatibility alias: prefer POST /events in production.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tenant_id\": \"{{tenant_id}}\",\n  \"room_id\": \"{{room_id}}\",\n  \"timestamp\": \"2025-01-01T10:05:00Z\",\n  \"people_count\": 2,\n  \"office_id\": \"{{office_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /events?tenant_id={{tenant_id}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/events?tenant_id={{tenant_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "events?tenant_id={{tenant_id}}"
+              ]
+            },
+            "description": "List all events for a tenant."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/events?tenant_id={{tenant_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "events?tenant_id={{tenant_id}}"
+                  ]
+                },
+                "description": "List all events for a tenant."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[]"
+            }
           ]
         }
-      }
+      ]
     },
     {
-      "name": "Utilization (7d)",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:8080/utilization/bank123/confA",
-          "protocol": "http",
-          "host": [
-            "localhost"
+      "name": "Utilization",
+      "item": [
+        {
+          "name": "GET /utilization?tenant_id={{tenant_id}}&room_id={{room_id}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utilization?tenant_id={{tenant_id}}&room_id={{room_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utilization?tenant_id={{tenant_id}}&room_id={{room_id}}"
+              ]
+            },
+            "description": "Compute utilization for a room (querystring style)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
           ],
-          "port": "8080",
-          "path": [
-            "utilization",
-            "bank123",
-            "confA"
+          "response": [
+            {
+              "name": "OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/utilization?tenant_id={{tenant_id}}&room_id={{room_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "utilization?tenant_id={{tenant_id}}&room_id={{room_id}}"
+                  ]
+                },
+                "description": "Compute utilization for a room (querystring style)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"avg7\": 3.2,\n  \"max30\": 8,\n  \"totalEvents\": 12\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /utilization/{{tenant_id}}/{{room_id}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/utilization/{{tenant_id}}/{{room_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "utilization",
+                "{{tenant_id}}",
+                "{{room_id}}"
+              ]
+            },
+            "description": "Compute utilization for a room (path params style)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/utilization/{{tenant_id}}/{{room_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "utilization",
+                    "{{tenant_id}}",
+                    "{{room_id}}"
+                  ]
+                },
+                "description": "Compute utilization for a room (path params style)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"avg7\": 3.2,\n  \"max30\": 8,\n  \"totalEvents\": 12\n}"
+            }
           ]
         }
-      }
+      ]
     },
     {
-      "name": "Recommend Underutilized",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:8080/recommend/bank123/blr-hq",
-          "protocol": "http",
-          "host": [
-            "localhost"
+      "name": "Recommend",
+      "item": [
+        {
+          "name": "GET /recommend?tenant_id={{tenant_id}}&office_id={{office_id}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/recommend?tenant_id={{tenant_id}}&office_id={{office_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "recommend?tenant_id={{tenant_id}}&office_id={{office_id}}"
+              ]
+            },
+            "description": "Recommend underutilized rooms (querystring style)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
           ],
-          "port": "8080",
-          "path": [
-            "recommend",
-            "bank123",
-            "blr-hq"
+          "response": [
+            {
+              "name": "OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/recommend?tenant_id={{tenant_id}}&office_id={{office_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "recommend?tenant_id={{tenant_id}}&office_id={{office_id}}"
+                  ]
+                },
+                "description": "Recommend underutilized rooms (querystring style)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"office_id\": \"{{office_id}}\",\n  \"total_rooms\": 3,\n  \"underutilized_rooms\": [\n    {\n      \"room_id\": \"conf_A\",\n      \"utilization_pct\": 25,\n      \"total_events\": 7\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /recommend/{{tenant_id}}/{{office_id}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/recommend/{{tenant_id}}/{{office_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "recommend",
+                "{{tenant_id}}",
+                "{{office_id}}"
+              ]
+            },
+            "description": "Recommend underutilized rooms (path params style)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/recommend/{{tenant_id}}/{{office_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "recommend",
+                    "{{tenant_id}}",
+                    "{{office_id}}"
+                  ]
+                },
+                "description": "Recommend underutilized rooms (path params style)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"office_id\": \"{{office_id}}\",\n  \"total_rooms\": 3,\n  \"underutilized_rooms\": [\n    {\n      \"room_id\": \"conf_B\",\n      \"utilization_pct\": 30,\n      \"total_events\": 5\n    }\n  ]\n}"
+            }
           ]
         }
-      }
+      ]
+    },
+    {
+      "name": "Query (NLQ)",
+      "item": [
+        {
+          "name": "POST /query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/query",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "query"
+              ]
+            },
+            "description": "Natural language query endpoint (LLM-stubbed). Returns structured result with intent extraction.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"q\": \"recommend rooms for {{office_id}} in {{tenant_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/query",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "query"
+                  ]
+                },
+                "description": "Natural language query endpoint (LLM-stubbed). Returns structured result with intent extraction.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"q\": \"recommend rooms for {{office_id}} in {{tenant_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"intent\": \"recommend\",\n  \"tenant\": \"{{tenant_id}}\",\n  \"office\": \"{{office_id}}\",\n  \"result\": {\n    \"underutilized_rooms\": [\n      {\n        \"room_id\": \"conf_A\",\n        \"score\": 0.71\n      }\n    ]\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ops / Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Liveness probe."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/health",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
+                },
+                "description": "Liveness probe."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": \"ok\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /teardown",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirm\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/teardown",
+              "host": [
+                "http://localhost:8080"
+              ],
+              "path": [
+                "teardown"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swagger",
+      "item": [
+        {
+          "name": "GET /api-docs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-role",
+                "value": "{{role}}"
+              },
+              {
+                "key": "x-user-region",
+                "value": "{{region}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api-docs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api-docs"
+              ]
+            },
+            "description": "Swagger UI (HTML)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "x-user-role",
+                    "value": "{{role}}"
+                  },
+                  {
+                    "key": "x-user-region",
+                    "value": "{{region}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api-docs",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api-docs"
+                  ]
+                },
+                "description": "Swagger UI (HTML)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"html\": true\n}"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
