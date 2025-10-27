@@ -1,153 +1,618 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
-  title: Saltmine Prototype API – V5 (SQLite + RBAC + NLQ)
+  title: "Saltmine Prototype API \u2013 V5 (SQLite + RBAC + NLQ)"
   version: 1.0.0
-  description: |
-    Multi-tenant API for occupancy events, utilization metrics, and recommendations.
+  description: 'Multi-tenant API for occupancy events, utilization metrics, and recommendations.
+
     Supports SQLite or in-memory store for demo purposes.
-    ⚙️ RBAC + NLQ extensions available in V5 branch.
 
+    RBAC and NLQ are included in the V5 branch.'
 servers:
-  - url: https://solitary-spooky-poltergeist-g755pjvr5xcw44x-8080.app.github.dev
-    description: GitHub Codespaces / Render Hosted Deployment
-  - url: http://localhost:8080
-    description: Local Development Environment
-  - url: https://saltmine-prototype.onrender.com
-    description: Render Production Deployment
-
-
+- url: http://localhost:8080
+  description: Local Development Environment
+- url: https://saltmine-prototype.onrender.com
+  description: Render Production Deployment
+- url: https://YOUR-CODESPACE-NAME-8080.app.github.dev
+  description: GitHub Codespaces (replace YOUR-CODESPACE-NAME with the active codespace
+    host)
+tags:
+- name: Events
+  description: Create and list occupancy events.
+- name: Utilization
+  description: Read utilization metrics for rooms.
+- name: Recommend
+  description: Heuristic recommendations for underutilized rooms.
+- name: Query (NLQ)
+  description: Natural language query endpoint.
+- name: Ops / Health
+  description: Operational endpoints for health checks and teardown.
+- name: Swagger
+  description: Swagger UI endpoint.
 paths:
-  /event:
+  /events:
     post:
-      summary: Ingest an occupancy event
-      description: >
-        Accepts a single occupancy event and stores it under the tenant context.
-        Requires `x-tenant-id` header for tenant isolation.
+      tags:
+      - Events
+      summary: Create an occupancy event (canonical endpoint)
+      description: Adds a new occupancy record for the specified tenant.
       parameters:
-        - in: header
-          name: x-tenant-id
-          required: true
-          schema: { type: string }
-          description: Unique tenant identifier (e.g., bank123)
+      - in: header
+        name: x-tenant-id
+        required: true
+        schema:
+          type: string
+        description: Tenant ID for multi-tenant isolation.
+      - in: header
+        name: x-user-role
+        required: false
+        schema:
+          type: string
+        description: User role for RBAC (admin, analyst, seller, viewer).
+      - in: header
+        name: x-user-region
+        required: false
+        schema:
+          type: string
+        description: Optional region tag.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/OccupancyEvent'
+            examples:
+              basic:
+                value:
+                  tenant_id: bankcorp
+                  room_id: conf_A
+                  timestamp: '2025-01-01T10:00:00Z'
+                  people_count: 3
+                  office_id: blr_finops
       responses:
         '201':
-          description: Event created successfully
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventCreated'
+              examples:
+                created:
+                  value:
+                    ok: true
         '400':
           description: Invalid payload
-        '401':
-          description: Missing or invalid tenant header
-
-  /utilization/{tenant_id}/{room_id}:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     get:
-      summary: Average utilization for the past 7 days
-      description: >
-        Returns average occupancy metrics for the given room.
-        Requires `x-tenant-id` header to scope data correctly.
+      tags:
+      - Events
+      summary: List all events for a tenant
+      description: Returns all recorded events for the given tenant.
       parameters:
-        - in: header
-          name: x-tenant-id
-          required: true
-          schema: { type: string }
-          description: Unique tenant identifier (e.g., bank123)
-        - in: path
-          name: tenant_id
-          required: true
-          schema: { type: string }
-          description: Tenant ID for data isolation
-        - in: path
-          name: room_id
-          required: true
-          schema: { type: string }
-          description: Room identifier
+      - in: header
+        name: x-tenant-id
+        required: true
+        schema:
+          type: string
+        description: Tenant ID for multi-tenant isolation.
+      - in: header
+        name: x-user-role
+        required: false
+        schema:
+          type: string
+        description: User role for RBAC (admin, analyst, seller, viewer).
+      - in: header
+        name: x-user-region
+        required: false
+        schema:
+          type: string
+        description: Optional region tag.
+      - in: query
+        name: tenant_id
+        required: true
+        schema:
+          type: string
       responses:
         '200':
-          description: Utilization result
+          description: Events list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsList'
+              examples:
+                empty:
+                  value: []
+        '400':
+          description: Missing tenant_id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /event:
+    post:
+      tags:
+      - Events
+      summary: Compatibility alias for POST /events
+      description: Used primarily in automated tests; prefer /events in production.
+      parameters:
+      - in: header
+        name: x-tenant-id
+        required: true
+        schema:
+          type: string
+        description: Tenant ID for multi-tenant isolation.
+      - in: header
+        name: x-user-role
+        required: false
+        schema:
+          type: string
+        description: User role for RBAC (admin, analyst, seller, viewer).
+      - in: header
+        name: x-user-region
+        required: false
+        schema:
+          type: string
+        description: Optional region tag.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OccupancyEvent'
+            examples:
+              compat:
+                value:
+                  tenant_id: bankcorp
+                  room_id: conf_A
+                  timestamp: '2025-01-01T10:05:00Z'
+                  people_count: 2
+                  office_id: blr_finops
+      responses:
+        '201':
+          description: Event created (alias)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventCreated'
+              examples:
+                created:
+                  value:
+                    ok: true
+  /utilization:
+    get:
+      tags:
+      - Utilization
+      summary: Get utilization metrics (query style)
+      description: Computes last 7-day average and 30-day peak occupancy for a room.
+      parameters:
+      - in: header
+        name: x-tenant-id
+        required: true
+        schema:
+          type: string
+        description: Tenant ID for multi-tenant isolation.
+      - in: header
+        name: x-user-role
+        required: false
+        schema:
+          type: string
+        description: User role for RBAC (admin, analyst, seller, viewer).
+      - in: header
+        name: x-user-region
+        required: false
+        schema:
+          type: string
+        description: Optional region tag.
+      - in: query
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: room_id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Utilization
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UtilizationResult'
+              examples:
+                sample:
+                  value:
+                    avg7: 3.2
+                    max30: 8
+                    totalEvents: 12
         '404':
-          description: No utilization data found
-
-  /recommend/{tenant_id}/{office_id}:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /utilization/{tenant_id}/{room_id}:
     get:
-      summary: Recommend underutilized rooms in an office
-      description: >
-        Provides heuristic recommendations on underutilized rooms.
-        Requires `x-tenant-id` header for tenant-scoped access.
+      tags:
+      - Utilization
+      summary: Get utilization metrics (path style)
+      description: Computes last 7-day average and 30-day peak occupancy for a room.
       parameters:
-        - in: header
-          name: x-tenant-id
-          required: true
-          schema: { type: string }
-          description: Unique tenant identifier (e.g., bank123)
-        - in: path
-          name: tenant_id
-          required: true
-          schema: { type: string }
-          description: Tenant ID for data isolation
-        - in: path
-          name: office_id
-          required: true
-          schema: { type: string }
-          description: Office identifier
+      - in: header
+        name: x-tenant-id
+        required: true
+        schema:
+          type: string
+        description: Tenant ID for multi-tenant isolation.
+      - in: header
+        name: x-user-role
+        required: false
+        schema:
+          type: string
+        description: User role for RBAC (admin, analyst, seller, viewer).
+      - in: header
+        name: x-user-region
+        required: false
+        schema:
+          type: string
+        description: Optional region tag.
+      - in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: room_id
+        required: true
+        schema:
+          type: string
       responses:
         '200':
-          description: Recommendation results
+          description: Utilization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UtilizationResult'
+              examples:
+                sample:
+                  value:
+                    avg7: 3.2
+                    max30: 8
+                    totalEvents: 12
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /recommend:
+    get:
+      tags:
+      - Recommend
+      summary: Recommend underutilized rooms (query style)
+      description: Heuristic output showing rooms with low occupancy.
+      parameters:
+      - in: header
+        name: x-tenant-id
+        required: true
+        schema:
+          type: string
+        description: Tenant ID for multi-tenant isolation.
+      - in: header
+        name: x-user-role
+        required: false
+        schema:
+          type: string
+        description: User role for RBAC (admin, analyst, seller, viewer).
+      - in: header
+        name: x-user-region
+        required: false
+        schema:
+          type: string
+        description: Optional region tag.
+      - in: query
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: office_id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Recommendations
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecommendationResult'
+              examples:
+                sample:
+                  value:
+                    office_id: blr_finops
+                    total_rooms: 3
+                    underutilized_rooms:
+                    - room_id: conf_A
+                      utilization_pct: 25
+                      total_events: 7
         '404':
-          description: No recommendations available
-
+          description: None found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /recommend/{tenant_id}/{office_id}:
+    get:
+      tags:
+      - Recommend
+      summary: Recommend underutilized rooms (path style)
+      description: Heuristic output showing rooms with low occupancy.
+      parameters:
+      - in: header
+        name: x-tenant-id
+        required: true
+        schema:
+          type: string
+        description: Tenant ID for multi-tenant isolation.
+      - in: header
+        name: x-user-role
+        required: false
+        schema:
+          type: string
+        description: User role for RBAC (admin, analyst, seller, viewer).
+      - in: header
+        name: x-user-region
+        required: false
+        schema:
+          type: string
+        description: Optional region tag.
+      - in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: office_id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationResult'
+              examples:
+                sample:
+                  value:
+                    office_id: blr_finops
+                    total_rooms: 3
+                    underutilized_rooms:
+                    - room_id: conf_B
+                      utilization_pct: 30
+                      total_events: 5
+        '404':
+          description: None found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /query:
+    post:
+      tags:
+      - Query (NLQ)
+      summary: Natural language query
+      description: Parses a plain text query and returns structured intent and results.
+      parameters:
+      - in: header
+        name: x-user-role
+        required: false
+        schema:
+          type: string
+        description: User role for RBAC (admin, analyst, seller, viewer).
+      - in: header
+        name: x-user-region
+        required: false
+        schema:
+          type: string
+        description: Optional region tag.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+            examples:
+              basic:
+                value:
+                  q: recommend rooms for blr_finops in bankcorp
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+              examples:
+                sample:
+                  value:
+                    intent: recommend
+                    tenant: bankcorp
+                    office: blr_finops
+                    result:
+                      underutilized_rooms:
+                      - room_id: conf_A
+                        score: 0.71
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /health:
+    get:
+      tags:
+      - Ops / Health
+      summary: Liveness probe
+      description: Health check.
+      responses:
+        '200':
+          description: OK
+  /teardown:
+    post:
+      tags:
+      - Ops / Health
+      summary: Teardown seeded test data
+      description: Clears locally seeded events. For local/test only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeardownRequest'
+            examples:
+              confirm:
+                value:
+                  confirm: true
+      responses:
+        '200':
+          description: Teardown completed
+        '403':
+          description: Not allowed
+  /api-docs:
+    get:
+      tags:
+      - Swagger
+      summary: Swagger UI
+      description: Interactive docs.
+      responses:
+        '200':
+          description: HTML
 components:
   schemas:
     OccupancyEvent:
       type: object
+      required:
+      - tenant_id
+      - room_id
+      - timestamp
+      - people_count
       properties:
         tenant_id:
           type: string
-          example: bank123
+          example: bankcorp
         room_id:
           type: string
-          example: confA
+          example: conf_A
         timestamp:
           type: string
           format: date-time
-          example: 2025-10-27T10:30:00Z
+          example: '2025-01-01T10:00:00Z'
         people_count:
           type: integer
           minimum: 0
-          example: 5
+          example: 3
         office_id:
           type: string
-          nullable: true
-          description: Optional for demo; required in production
-      required: [tenant_id, room_id, timestamp, people_count]
-
+          example: blr_finops
+    EventCreated:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+    EventsList:
+      type: array
+      items:
+        type: object
+      example: []
     UtilizationResult:
       type: object
       properties:
-        tenant_id: { type: string, example: bank123 }
-        room_id: { type: string, example: confA }
-        window_days: { type: integer, example: 7 }
-        average_people: { type: number, example: 3.6 }
-        samples: { type: integer, example: 42 }
-
+        avg7:
+          type: number
+          example: 3.2
+        max30:
+          type: number
+          example: 8
+        totalEvents:
+          type: integer
+          example: 12
+    RecommendationRoom:
+      type: object
+      properties:
+        room_id:
+          type: string
+          example: conf_A
+        utilization_pct:
+          type: number
+          example: 25
+        total_events:
+          type: integer
+          example: 7
     RecommendationResult:
       type: object
       properties:
-        tenant_id: { type: string, example: bank123 }
-        office_id: { type: string, example: HQ-London }
+        office_id:
+          type: string
+          example: blr_finops
+        total_rooms:
+          type: integer
+          example: 3
         underutilized_rooms:
           type: array
           items:
-            type: string
-          example: ["confB", "confC"]
+            $ref: '#/components/schemas/RecommendationRoom'
+    QueryRequest:
+      type: object
+      required:
+      - q
+      properties:
+        q:
+          type: string
+          example: recommend rooms for blr_finops in bankcorp
+    QueryResponse:
+      type: object
+      properties:
+        intent:
+          type: string
+          example: recommend
+        tenant:
+          type: string
+          example: bankcorp
+        office:
+          type: string
+          example: blr_finops
+        result:
+          type: object
+          properties:
+            underutilized_rooms:
+              type: array
+              items:
+                type: object
+                properties:
+                  room_id:
+                    type: string
+                    example: conf_A
+                  score:
+                    type: number
+                    example: 0.71
+    TeardownRequest:
+      type: object
+      required:
+      - confirm
+      properties:
+        confirm:
+          type: boolean
+          example: true
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Invalid payload

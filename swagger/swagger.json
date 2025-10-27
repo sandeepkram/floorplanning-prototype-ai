@@ -1,169 +1,280 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "info": {
-    "title": "Saltmine Prototype API - V1 Baseline",
+    "title": "Saltmine Prototype API \u2013 V5 (SQLite + RBAC + NLQ)",
     "version": "1.0.0",
-    "description": "Additive multi-tenant samples with seeded data."
+    "description": "Multi-tenant API for occupancy events, utilization metrics, and recommendations.\nSupports SQLite or in-memory store for demo purposes.\nRBAC and NLQ are included in the V5 branch."
   },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local Development Environment"
+    },
+    {
+      "url": "https://saltmine-prototype.onrender.com",
+      "description": "Render Production Deployment"
+    },
+    {
+      "url": "https://YOUR-CODESPACE-NAME-8080.app.github.dev",
+      "description": "GitHub Codespaces (replace YOUR-CODESPACE-NAME with the active codespace host)"
+    }
+  ],
   "tags": [
     {
-      "name": "Tenants"
+      "name": "Events",
+      "description": "Create and list occupancy events."
+    },
+    {
+      "name": "Utilization",
+      "description": "Read utilization metrics for rooms."
+    },
+    {
+      "name": "Recommend",
+      "description": "Heuristic recommendations for underutilized rooms."
+    },
+    {
+      "name": "Query (NLQ)",
+      "description": "Natural language query endpoint."
+    },
+    {
+      "name": "Ops / Health",
+      "description": "Operational endpoints for health checks and teardown."
+    },
+    {
+      "name": "Swagger",
+      "description": "Swagger UI endpoint."
     }
   ],
   "paths": {
-    "/api/{tenantId}/users": {
-      "get": {
-        "tags": [
-          "Tenants"
-        ],
-        "summary": "Get users",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "examples": {
-                  "bankcorp": {
-                    "value": {
-                      "tenantId": "bankcorp",
-                      "entity": "users",
-                      "data": [
-                        {
-                          "id": 1,
-                          "name": "Alice",
-                          "role": "Relationship Manager"
-                        },
-                        {
-                          "id": 2,
-                          "name": "Raj",
-                          "role": "Credit Analyst"
-                        }
-                      ]
-                    }
-                  },
-                  "retailx": {
-                    "value": {
-                      "tenantId": "retailx",
-                      "entity": "users",
-                      "data": [
-                        {
-                          "id": 1,
-                          "name": "Priya",
-                          "role": "Store Manager"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "bankcorp",
-                "retailx",
-                "healthplus"
-              ]
-            }
-          }
-        ]
-      },
+    "/events": {
       "post": {
         "tags": [
-          "Tenants"
+          "Events"
         ],
-        "summary": "Create user (path tenant)",
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        },
+        "summary": "Create an occupancy event (canonical endpoint)",
+        "description": "Adds a new occupancy record for the specified tenant.",
         "parameters": [
           {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "bankcorp",
-                "retailx",
-                "healthplus"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "examples": {
-                "bankcorp": {
-                  "value": {
-                    "name": "Nikhil",
-                    "role": "Analyst"
-                  }
-                },
-                "retailx": {
-                  "value": {
-                    "name": "Asha",
-                    "role": "Associate"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users": {
-      "post": {
-        "tags": [
-          "Tenants"
-        ],
-        "summary": "Create user (header tenant)",
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        },
-        "parameters": [
-          {
-            "name": "x-tenant-id",
             "in": "header",
+            "name": "x-tenant-id",
             "required": true,
             "schema": {
-              "type": "string",
-              "enum": [
-                "bankcorp",
-                "retailx",
-                "healthplus"
-              ]
-            }
+              "type": "string"
+            },
+            "description": "Tenant ID for multi-tenant isolation."
+          },
+          {
+            "in": "header",
+            "name": "x-user-role",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User role for RBAC (admin, analyst, seller, viewer)."
+          },
+          {
+            "in": "header",
+            "name": "x-user-region",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional region tag."
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OccupancyEvent"
+              },
               "examples": {
-                "healthplus": {
+                "basic": {
                   "value": {
-                    "name": "Leela",
-                    "role": "Nurse"
+                    "tenant_id": "bankcorp",
+                    "room_id": "conf_A",
+                    "timestamp": "2025-01-01T10:00:00Z",
+                    "people_count": 3,
+                    "office_id": "blr_finops"
                   }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventCreated"
                 },
-                "bankcorp": {
+                "examples": {
+                  "created": {
+                    "value": {
+                      "ok": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "List all events for a tenant",
+        "description": "Returns all recorded events for the given tenant.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tenant ID for multi-tenant isolation."
+          },
+          {
+            "in": "header",
+            "name": "x-user-role",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User role for RBAC (admin, analyst, seller, viewer)."
+          },
+          {
+            "in": "header",
+            "name": "x-user-region",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional region tag."
+          },
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Events list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsList"
+                },
+                "examples": {
+                  "empty": {
+                    "value": []
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing tenant_id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/event": {
+      "post": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Compatibility alias for POST /events",
+        "description": "Used primarily in automated tests; prefer /events in production.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tenant ID for multi-tenant isolation."
+          },
+          {
+            "in": "header",
+            "name": "x-user-role",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User role for RBAC (admin, analyst, seller, viewer)."
+          },
+          {
+            "in": "header",
+            "name": "x-user-region",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional region tag."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OccupancyEvent"
+              },
+              "examples": {
+                "compat": {
                   "value": {
-                    "name": "Tom",
-                    "role": "Auditor"
+                    "tenant_id": "bankcorp",
+                    "room_id": "conf_A",
+                    "timestamp": "2025-01-01T10:05:00Z",
+                    "people_count": 2,
+                    "office_id": "blr_finops"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event created (alias)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventCreated"
+                },
+                "examples": {
+                  "created": {
+                    "value": {
+                      "ok": true
+                    }
                   }
                 }
               }
@@ -172,75 +283,84 @@
         }
       }
     },
-    "/api/{tenantId}/accounts": {
+    "/utilization": {
       "get": {
         "tags": [
-          "Tenants"
+          "Utilization"
         ],
-        "summary": "Get accounts (bankcorp)",
+        "summary": "Get utilization metrics (query style)",
+        "description": "Computes last 7-day average and 30-day peak occupancy for a room.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tenant ID for multi-tenant isolation."
+          },
+          {
+            "in": "header",
+            "name": "x-user-role",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User role for RBAC (admin, analyst, seller, viewer)."
+          },
+          {
+            "in": "header",
+            "name": "x-user-region",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional region tag."
+          },
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "room_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Utilization",
             "content": {
               "application/json": {
-                "examples": {}
+                "schema": {
+                  "$ref": "#/components/schemas/UtilizationResult"
+                },
+                "examples": {
+                  "sample": {
+                    "value": {
+                      "avg7": 3.2,
+                      "max30": 8,
+                      "totalEvents": 12
+                    }
+                  }
+                }
               }
             }
-          }
-        },
-        "parameters": [
-          {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "bankcorp"
-              ]
-            }
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "Tenants"
-        ],
-        "summary": "Create account (bankcorp)",
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        },
-        "parameters": [
-          {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "bankcorp"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "examples": {
-                "ex1": {
-                  "value": {
-                    "type": "Savings",
-                    "balance": 1000
-                  }
-                },
-                "ex2": {
-                  "value": {
-                    "type": "Loan",
-                    "balance": -250000
-                  }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -248,77 +368,84 @@
         }
       }
     },
-    "/api/{tenantId}/products": {
+    "/utilization/{tenant_id}/{room_id}": {
       "get": {
         "tags": [
-          "Tenants"
+          "Utilization"
         ],
-        "summary": "Get products (retailx)",
+        "summary": "Get utilization metrics (path style)",
+        "description": "Computes last 7-day average and 30-day peak occupancy for a room.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tenant ID for multi-tenant isolation."
+          },
+          {
+            "in": "header",
+            "name": "x-user-role",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User role for RBAC (admin, analyst, seller, viewer)."
+          },
+          {
+            "in": "header",
+            "name": "x-user-region",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional region tag."
+          },
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "room_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Utilization",
             "content": {
               "application/json": {
-                "examples": {}
+                "schema": {
+                  "$ref": "#/components/schemas/UtilizationResult"
+                },
+                "examples": {
+                  "sample": {
+                    "value": {
+                      "avg7": 3.2,
+                      "max30": 8,
+                      "totalEvents": 12
+                    }
+                  }
+                }
               }
             }
-          }
-        },
-        "parameters": [
-          {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "retailx"
-              ]
-            }
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "Tenants"
-        ],
-        "summary": "Create product (retailx)",
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        },
-        "parameters": [
-          {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "retailx"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "examples": {
-                "ex1": {
-                  "value": {
-                    "sku": "SKU-010",
-                    "name": "Charger",
-                    "price": 499
-                  }
-                },
-                "ex2": {
-                  "value": {
-                    "sku": "SKU-011",
-                    "name": "Marker",
-                    "price": 49
-                  }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -326,78 +453,508 @@
         }
       }
     },
-    "/api/{tenantId}/patients": {
+    "/recommend": {
       "get": {
         "tags": [
-          "Tenants"
+          "Recommend"
         ],
-        "summary": "Get patients (healthplus)",
+        "summary": "Recommend underutilized rooms (query style)",
+        "description": "Heuristic output showing rooms with low occupancy.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tenant ID for multi-tenant isolation."
+          },
+          {
+            "in": "header",
+            "name": "x-user-role",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User role for RBAC (admin, analyst, seller, viewer)."
+          },
+          {
+            "in": "header",
+            "name": "x-user-region",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional region tag."
+          },
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "office_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Recommendations",
             "content": {
               "application/json": {
-                "examples": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationResult"
+                },
+                "examples": {
+                  "sample": {
+                    "value": {
+                      "office_id": "blr_finops",
+                      "total_rooms": 3,
+                      "underutilized_rooms": [
+                        {
+                          "room_id": "conf_A",
+                          "utilization_pct": 25,
+                          "total_events": 7
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "None found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
-        },
+        }
+      }
+    },
+    "/recommend/{tenant_id}/{office_id}": {
+      "get": {
+        "tags": [
+          "Recommend"
+        ],
+        "summary": "Recommend underutilized rooms (path style)",
+        "description": "Heuristic output showing rooms with low occupancy.",
         "parameters": [
           {
-            "name": "tenantId",
-            "in": "path",
+            "in": "header",
+            "name": "x-tenant-id",
             "required": true,
             "schema": {
-              "type": "string",
-              "enum": [
-                "healthplus"
-              ]
+              "type": "string"
+            },
+            "description": "Tenant ID for multi-tenant isolation."
+          },
+          {
+            "in": "header",
+            "name": "x-user-role",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User role for RBAC (admin, analyst, seller, viewer)."
+          },
+          {
+            "in": "header",
+            "name": "x-user-region",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional region tag."
+          },
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "office_id",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
-        ]
-      },
+        ],
+        "responses": {
+          "200": {
+            "description": "Recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationResult"
+                },
+                "examples": {
+                  "sample": {
+                    "value": {
+                      "office_id": "blr_finops",
+                      "total_rooms": 3,
+                      "underutilized_rooms": [
+                        {
+                          "room_id": "conf_B",
+                          "utilization_pct": 30,
+                          "total_events": 5
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "None found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query": {
       "post": {
         "tags": [
-          "Tenants"
+          "Query (NLQ)"
         ],
-        "summary": "Create patient (healthplus)",
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        },
+        "summary": "Natural language query",
+        "description": "Parses a plain text query and returns structured intent and results.",
         "parameters": [
           {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
+            "in": "header",
+            "name": "x-user-role",
+            "required": false,
             "schema": {
-              "type": "string",
-              "enum": [
-                "healthplus"
-              ]
-            }
+              "type": "string"
+            },
+            "description": "User role for RBAC (admin, analyst, seller, viewer)."
+          },
+          {
+            "in": "header",
+            "name": "x-user-region",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional region tag."
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              },
               "examples": {
-                "ex1": {
+                "basic": {
                   "value": {
-                    "name": "Ravi",
-                    "condition": "COPD"
-                  }
-                },
-                "ex2": {
-                  "value": {
-                    "name": "Isha",
-                    "condition": "Arthritis"
+                    "q": "recommend rooms for blr_finops in bankcorp"
                   }
                 }
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                },
+                "examples": {
+                  "sample": {
+                    "value": {
+                      "intent": "recommend",
+                      "tenant": "bankcorp",
+                      "office": "blr_finops",
+                      "result": {
+                        "underutilized_rooms": [
+                          {
+                            "room_id": "conf_A",
+                            "score": 0.71
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Ops / Health"
+        ],
+        "summary": "Liveness probe",
+        "description": "Health check.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/teardown": {
+      "post": {
+        "tags": [
+          "Ops / Health"
+        ],
+        "summary": "Teardown seeded test data",
+        "description": "Clears locally seeded events. For local/test only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeardownRequest"
+              },
+              "examples": {
+                "confirm": {
+                  "value": {
+                    "confirm": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Teardown completed"
+          },
+          "403": {
+            "description": "Not allowed"
+          }
+        }
+      }
+    },
+    "/api-docs": {
+      "get": {
+        "tags": [
+          "Swagger"
+        ],
+        "summary": "Swagger UI",
+        "description": "Interactive docs.",
+        "responses": {
+          "200": {
+            "description": "HTML"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OccupancyEvent": {
+        "type": "object",
+        "required": [
+          "tenant_id",
+          "room_id",
+          "timestamp",
+          "people_count"
+        ],
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "example": "bankcorp"
+          },
+          "room_id": {
+            "type": "string",
+            "example": "conf_A"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-01T10:00:00Z"
+          },
+          "people_count": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 3
+          },
+          "office_id": {
+            "type": "string",
+            "example": "blr_finops"
+          }
+        }
+      },
+      "EventCreated": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "EventsList": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "example": []
+      },
+      "UtilizationResult": {
+        "type": "object",
+        "properties": {
+          "avg7": {
+            "type": "number",
+            "example": 3.2
+          },
+          "max30": {
+            "type": "number",
+            "example": 8
+          },
+          "totalEvents": {
+            "type": "integer",
+            "example": 12
+          }
+        }
+      },
+      "RecommendationRoom": {
+        "type": "object",
+        "properties": {
+          "room_id": {
+            "type": "string",
+            "example": "conf_A"
+          },
+          "utilization_pct": {
+            "type": "number",
+            "example": 25
+          },
+          "total_events": {
+            "type": "integer",
+            "example": 7
+          }
+        }
+      },
+      "RecommendationResult": {
+        "type": "object",
+        "properties": {
+          "office_id": {
+            "type": "string",
+            "example": "blr_finops"
+          },
+          "total_rooms": {
+            "type": "integer",
+            "example": 3
+          },
+          "underutilized_rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecommendationRoom"
+            }
+          }
+        }
+      },
+      "QueryRequest": {
+        "type": "object",
+        "required": [
+          "q"
+        ],
+        "properties": {
+          "q": {
+            "type": "string",
+            "example": "recommend rooms for blr_finops in bankcorp"
+          }
+        }
+      },
+      "QueryResponse": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "example": "recommend"
+          },
+          "tenant": {
+            "type": "string",
+            "example": "bankcorp"
+          },
+          "office": {
+            "type": "string",
+            "example": "blr_finops"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "underutilized_rooms": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "room_id": {
+                      "type": "string",
+                      "example": "conf_A"
+                    },
+                    "score": {
+                      "type": "number",
+                      "example": 0.71
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "TeardownRequest": {
+        "type": "object",
+        "required": [
+          "confirm"
+        ],
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Invalid payload"
           }
         }
       }
