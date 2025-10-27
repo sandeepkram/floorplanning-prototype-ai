@@ -25,7 +25,7 @@ app.use('/', recommendRoute);
 
 describe('API', () => {
   it('should accept an event and compute utilization', async () => {
-    await request(app).post('/event').send({
+    await request(app).post('/test-event').send({
       tenant_id: 'bank123',
       room_id: 'confA',
       timestamp: new Date().toISOString(),
@@ -41,7 +41,7 @@ describe('API', () => {
 
   it('should recommend underutilized rooms (heuristic)', async () => {
     // add a low-utilization event
-    await request(app).post('/event').send({
+    await request(app).post('/test-event').send({
       tenant_id: 'bank123',
       room_id: 'confB',
       timestamp: new Date().toISOString(),
