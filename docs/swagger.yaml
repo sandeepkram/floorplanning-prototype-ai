@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: "Saltmine Prototype API \u2013 V5 (SQLite + RBAC + NLQ)"
+  title: "Saltmine Prototype API - V5 (SQLite + RBAC + NLQ)"
   version: 1.0.0
   description: 'Multi-tenant API for occupancy events, utilization metrics, and recommendations.
 
