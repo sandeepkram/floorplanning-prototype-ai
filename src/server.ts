@@ -15,6 +15,12 @@ import utilizationRoute from "./routes/utilization.js";
 import recommendRoute from "./routes/recommend.js";
 import queryRoute from "./routes/query.js";
 
+import { requireTenantHeader } from './middleware/requiretenant.js';
+import baseRoutes from './routes/baseroutes.js';
+
+
+
+
 // 🗃 Initialize store
 const store = createStore();
 if ("seed" in store && typeof (store as any).seed === "function") {
@@ -35,6 +41,9 @@ app.use(express.json());
 // 🔐 Access control and context
 app.use(contextMiddleware);
 app.use(accessControlMiddleware);
+
+app.use(requireTenantHeader);
+app.use(baseRoutes);
 
 // 🧪 Compatibility alias for Jest: /event → /events
 app.use("/event", (req, res, next) => {
