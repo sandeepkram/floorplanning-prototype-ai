@@ -1,16 +1,34 @@
 openapi: 3.0.3
 info:
-  title: Saltmine Prototype API
-  version: 0.1.0
-  description: >
-    Simplified multi-tenant API for occupancy events and utilization.
-    **Demo only** — contains production upgrade stubs in comments.
+  title: Saltmine Prototype API – V5 (SQLite + RBAC + NLQ)
+  version: 1.0.0
+  description: |
+    Multi-tenant API for occupancy events, utilization metrics, and recommendations.
+    Supports SQLite or in-memory store for demo purposes.
+    ⚙️ RBAC + NLQ extensions available in V5 branch.
+
 servers:
+  - url: https://solitary-spooky-poltergeist-g755pjvr5xcw44x-8080.app.github.dev
+    description: GitHub Codespaces / Render Hosted Deployment
   - url: http://localhost:8080
+    description: Local Development Environment
+  - url: https://saltmine-prototype.onrender.com
+    description: Render Production Deployment
+
+
 paths:
   /event:
     post:
       summary: Ingest an occupancy event
+      description: >
+        Accepts a single occupancy event and stores it under the tenant context.
+        Requires `x-tenant-id` header for tenant isolation.
+      parameters:
+        - in: header
+          name: x-tenant-id
+          required: true
+          schema: { type: string }
+          description: Unique tenant identifier (e.g., bank123)
       requestBody:
         required: true
         content:
@@ -19,21 +37,34 @@ paths:
               $ref: '#/components/schemas/OccupancyEvent'
       responses:
         '201':
-          description: Created
+          description: Event created successfully
         '400':
           description: Invalid payload
+        '401':
+          description: Missing or invalid tenant header
+
   /utilization/{tenant_id}/{room_id}:
     get:
       summary: Average utilization for the past 7 days
+      description: >
+        Returns average occupancy metrics for the given room.
+        Requires `x-tenant-id` header to scope data correctly.
       parameters:
+        - in: header
+          name: x-tenant-id
+          required: true
+          schema: { type: string }
+          description: Unique tenant identifier (e.g., bank123)
         - in: path
           name: tenant_id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: Tenant ID for data isolation
         - in: path
           name: room_id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: Room identifier
       responses:
         '200':
           description: Utilization result
@@ -41,37 +72,82 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UtilizationResult'
+        '404':
+          description: No utilization data found
+
   /recommend/{tenant_id}/{office_id}:
     get:
-      summary: Recommend underutilized rooms in an office (heuristic)
+      summary: Recommend underutilized rooms in an office
+      description: >
+        Provides heuristic recommendations on underutilized rooms.
+        Requires `x-tenant-id` header for tenant-scoped access.
       parameters:
+        - in: header
+          name: x-tenant-id
+          required: true
+          schema: { type: string }
+          description: Unique tenant identifier (e.g., bank123)
         - in: path
           name: tenant_id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: Tenant ID for data isolation
         - in: path
           name: office_id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: Office identifier
       responses:
         '200':
           description: Recommendation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationResult'
+        '404':
+          description: No recommendations available
+
 components:
   schemas:
     OccupancyEvent:
       type: object
       properties:
-        tenant_id: { type: string }
-        room_id: { type: string }
-        timestamp: { type: string, format: date-time }
-        people_count: { type: integer, minimum: 0 }
-        office_id: { type: string, nullable: true, description: "Optional for demo; recommended to be required in production" }
+        tenant_id:
+          type: string
+          example: bank123
+        room_id:
+          type: string
+          example: confA
+        timestamp:
+          type: string
+          format: date-time
+          example: 2025-10-27T10:30:00Z
+        people_count:
+          type: integer
+          minimum: 0
+          example: 5
+        office_id:
+          type: string
+          nullable: true
+          description: Optional for demo; required in production
       required: [tenant_id, room_id, timestamp, people_count]
+
     UtilizationResult:
       type: object
       properties:
-        tenant_id: { type: string }
-        room_id: { type: string }
-        window_days: { type: integer }
-        average_people: { type: number }
-        samples: { type: integer }
+        tenant_id: { type: string, example: bank123 }
+        room_id: { type: string, example: confA }
+        window_days: { type: integer, example: 7 }
+        average_people: { type: number, example: 3.6 }
+        samples: { type: integer, example: 42 }
+
+    RecommendationResult:
+      type: object
+      properties:
+        tenant_id: { type: string, example: bank123 }
+        office_id: { type: string, example: HQ-London }
+        underutilized_rooms:
+          type: array
+          items:
+            type: string
+          example: ["confB", "confC"]

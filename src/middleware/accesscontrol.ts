@@ -13,35 +13,57 @@ import { Request, Response, NextFunction } from "express";
  * (e.g., Casbin, Oso, or custom RBAC registry).
  */
 
-// Define simple RBAC permission map
+// ------------------------------------------------------------
+// RBAC Permission Matrix
+// ------------------------------------------------------------
+// Define which HTTP methods each role can use.
+// ⛔️ NOTE: In production, viewer should be ["GET"] only.
+// ✅ Temporarily allowing ["GET", "POST"] for testing Swagger.
+// ------------------------------------------------------------
 const rolePermissions: Record<string, string[]> = {
-  admin: ["GET", "POST", "PUT", "DELETE"],
+  admin:   ["GET", "POST", "PUT", "DELETE"],
   analyst: ["GET", "POST"],
-  seller: ["GET", "POST"],
-  viewer: ["GET"],
+  seller:  ["GET", "POST"],
+  viewer:  ["GET", "POST"], // 👈 TEMP: allow POST for viewers during dev/test
 };
 
 export function accessControlMiddleware(req: Request, res: Response, next: NextFunction) {
   const path = req.path.toLowerCase();
-  const role = (req.headers["x-user-role"] as string) || "viewer";
-  const region = (req.headers["x-user-region"] as string) || "global";
-  const tenant = (req.headers["x-tenant-id"] as string) || (process.env.NODE_ENV === "test" ? "test-tenant" : null);
+  const role =
+    (req.headers["x-user-role"] as string) ||
+    "viewer"; // default to viewer if missing
+  const region =
+    (req.headers["x-user-region"] as string) ||
+    "global"; // default region
+  const tenant =
+    (req.headers["x-tenant-id"] as string) ||
+    (process.env.NODE_ENV === "test" ? "test-tenant" : null);
 
-  // Attach access context
+  // Attach access context for downstream services
   (req as any).accessContext = { role, region, tenant };
 
-  // Allow NLQ endpoint bypass for now
+  // ----------------------------------------------------------------
+  // 1️⃣ Allow NLQ / query endpoints to bypass RBAC temporarily
+  // ----------------------------------------------------------------
   if (req.method === "POST" && (path === "/query" || path === "/nlq/query")) {
     return next();
   }
 
-  // Tenant header is mandatory in all other cases
+  // ----------------------------------------------------------------
+  // 2️⃣ Enforce presence of tenant header in all other cases
+  // ----------------------------------------------------------------
   if (!tenant) {
-    return res.status(400).json({ error: "Missing required header: x-tenant-id" });
+    return res.status(400).json({
+      error: "Missing required header: x-tenant-id",
+    });
   }
 
-  // RBAC enforcement
+  // ----------------------------------------------------------------
+  // 3️⃣ Apply role-based method restriction
+  // ----------------------------------------------------------------
   const allowedMethods = rolePermissions[role] || [];
+
+  // If method not allowed for this role → block it
   if (!allowedMethods.includes(req.method)) {
     return res.status(403).json({
       error: "Forbidden: insufficient role permissions",
@@ -50,10 +72,18 @@ export function accessControlMiddleware(req: Request, res: Response, next: NextF
     });
   }
 
+  // ----------------------------------------------------------------
+  // 4️⃣ Optional: Console audit for visibility in non-test env
+  // ----------------------------------------------------------------
   if (process.env.NODE_ENV !== "test") {
-    console.log(`🔐 AccessContext → tenant=${tenant}, role=${role}, region=${region}, method=${req.method}`);
+    console.log(
+      `🔐 AccessContext → tenant=${tenant}, role=${role}, region=${region}, method=${req.method}`
+    );
   }
 
+  // ----------------------------------------------------------------
+  // 5️⃣ Continue to next middleware / route
+  // ----------------------------------------------------------------
   next();
 }
 

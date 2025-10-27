@@ -9,19 +9,15 @@ import swaggerUi from "swagger-ui-express";
 import { createStore } from "./data/storefactory.js";
 import { contextMiddleware } from "./middleware/context.js";
 import { accessControlMiddleware } from "./middleware/accesscontrol.js";
+import { requireTenantHeader } from "./middleware/requiretenant.js";
 
 import eventsRoute from "./routes/events.js";
 import utilizationRoute from "./routes/utilization.js";
 import recommendRoute from "./routes/recommend.js";
 import queryRoute from "./routes/query.js";
+import baseRoutes from "./routes/baseroutes.js";
 
-import { requireTenantHeader } from './middleware/requiretenant.js';
-import baseRoutes from './routes/baseroutes.js';
-
-
-
-
-// 🗃 Initialize store
+// 🗃 Initialize the SQLite or InMemory store
 const store = createStore();
 if ("seed" in store && typeof (store as any).seed === "function") {
   try {
@@ -35,27 +31,97 @@ const app = express();
 
 // 🌐 Core middleware
 app.use(morgan("dev"));
-app.use(cors());
+
+// 🌐 CORS Configuration (handles localhost, Render, and dynamic GitHub Codespaces)
+const allowedOrigins = [
+  "http://localhost:8080",                             // Local
+  "https://saltmine-prototype.onrender.com"            // Render Deployment
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    try {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /\.app\.github\.dev$/.test(new URL(origin).hostname) // Any Codespace
+      ) {
+        callback(null, true);
+      } else {
+        console.warn(`🚫 Blocked CORS request from: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    } catch {
+      callback(null, true);
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-tenant-id", "x-user-role", "x-user-region"],
+  exposedHeaders: ["Content-Length", "x-tenant-id"],
+  credentials: true,
+  optionsSuccessStatus: 204
+}));
+
 app.use(express.json());
 
-// 🔐 Access control and context
+// 🩺 Healthcheck & Base routes FIRST (no tenant header required)
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
+app.get("/", (_req, res) => {
+  res.send("✅ Saltmine Prototype API is running. Visit /api-docs for Swagger UI.");
+});
+app.use(baseRoutes);
+
+// 📘 Swagger setup (must be defined BEFORE tenant enforcement)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const swaggerPath = path.join(__dirname, "..", "docs", "swagger.yaml");
+const swaggerDocument = YAML.load(swaggerPath);
+
+// Handle both local (/api-docs) and hosted (/swagger-ui) paths
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/swagger-ui", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// 🔐 Tenant enforcement (applies only after exempt routes)
+app.use(requireTenantHeader);
+
+// 🔐 Context & Access Control (RBAC)
 app.use(contextMiddleware);
 app.use(accessControlMiddleware);
 
-app.use(requireTenantHeader);
-app.use(baseRoutes);
+// 🧩 Compatibility Aliases for all major endpoints
+// -----------------------------------------------------
+// These allow Swagger/Jest to call singular endpoints
+// even if the Express route uses plural names internally.
 
-// 🧪 Compatibility alias for Jest: /event → /events
-app.use("/event", (req, res, next) => {
-  req.url = "/events";
+// /event → /events
+app.all(/^\/event(\/.*)?$/, (req, res, next) => {
+  req.url = req.url.replace(/^\/event/, "/events");
   next();
 });
 
-// 🧪 Direct test-only endpoint for seed injection
+// /utilization → /utilizations
+app.all(/^\/utilization(\/.*)?$/, (req, res, next) => {
+  req.url = req.url.replace(/^\/utilization/, "/utilizations");
+  next();
+});
+
+// /recommend → /recommendations
+app.all(/^\/recommend(\/.*)?$/, (req, res, next) => {
+  req.url = req.url.replace(/^\/recommend/, "/recommendations");
+  next();
+});
+
+// 🧪 Test-only endpoint for seed injection (bypasses RBAC for testing)
 app.post("/test-event", (req, res) => {
   try {
     const parsed = req.body;
-    if (!parsed || typeof parsed !== "object" || !parsed.tenant_id || !parsed.room_id || !parsed.timestamp) {
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      !parsed.tenant_id ||
+      !parsed.room_id ||
+      !parsed.timestamp
+    ) {
       return res.status(400).json({ error: "Invalid payload" });
     }
 
@@ -70,29 +136,31 @@ app.post("/test-event", (req, res) => {
   }
 });
 
-// 📘 Swagger setup
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const swaggerPath = path.join(__dirname, "..", "docs", "swagger.yaml");
-const swaggerDocument = YAML.load(swaggerPath);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
-// 🧭 Routes
+// 🧭 Primary protected routes (tenant header required)
 app.use("/events", eventsRoute);
-app.use("/utilization", utilizationRoute);
-app.use("/recommend", recommendRoute);
+app.use("/utilizations", utilizationRoute);
+app.use("/recommendations", recommendRoute);
 app.use("/", queryRoute);
 
-// 🩺 Health check
-app.get("/health", (_req, res) => res.json({ status: "ok" }));
+// ⚙️ Optional: /whoami endpoint for RBAC / Tenant debugging
+app.get("/whoami", (req, res) => {
+  const ctx = (req as any).accessContext || {};
+  res.json({
+    message: "Resolved Access Context",
+    tenant: ctx.tenant || "unknown",
+    role: ctx.role || "unknown",
+    region: ctx.region || "unknown"
+  });
+});
 
-// 🏠 Welcome
-app.get("/", (_req, res) => {
-  res.send("✅ Saltmine Prototype API is running. Visit /api-docs for Swagger UI.");
+// ⚠️ Catch-all 404 for undefined routes
+app.use((_req, res) => {
+  res.status(404).json({ error: "Endpoint not found" });
 });
 
 export default app;
 
+// 🚀 Launch server (except during test runs)
 if (process.env.NODE_ENV !== "test") {
   const port = Number(process.env.PORT || 8080);
   app.listen(port, () => {
