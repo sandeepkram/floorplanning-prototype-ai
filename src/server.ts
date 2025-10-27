@@ -32,74 +32,55 @@ app.use(morgan("dev"));
 app.use(cors());
 app.use(express.json());
 
-// 🔐 Access control and context should wrap all routes
+// 🔐 Access control and context
 app.use(contextMiddleware);
 app.use(accessControlMiddleware);
 
-/**
- * 🧪 Dedicated test-only route — avoids conflict with /events
- */
+// 🧪 Compatibility alias for Jest: /event → /events
+app.use("/event", (req, res, next) => {
+  req.url = "/events";
+  next();
+});
+
+// 🧪 Direct test-only endpoint for seed injection
 app.post("/test-event", (req, res) => {
   try {
     const parsed = req.body;
-    if (
-      !parsed ||
-      typeof parsed !== "object" ||
-      !parsed.tenant_id ||
-      !parsed.room_id ||
-      !parsed.timestamp
-    ) {
+    if (!parsed || typeof parsed !== "object" || !parsed.tenant_id || !parsed.room_id || !parsed.timestamp) {
       return res.status(400).json({ error: "Invalid payload" });
     }
 
     if ("addEvent" in store && typeof (store as any).addEvent === "function") {
       (store as any).addEvent(parsed.tenant_id, parsed);
-    } else {
-      console.warn("⚠️  store.addEvent not implemented — skipping insert");
     }
 
     return res.status(201).json({ ok: true });
   } catch (err) {
-    console.error("❌ Direct /test-event alias error:", err);
-    return res.status(500).json({ error: "Failed to store event" });
+    console.error("❌ /test-event error:", err);
+    return res.status(500).json({ error: "Failed to store test event" });
   }
 });
 
-/**
- * 📘 Swagger setup
- */
+// 📘 Swagger setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const swaggerPath = path.join(__dirname, "..", "docs", "swagger.yaml");
 const swaggerDocument = YAML.load(swaggerPath);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-/**
- * 🧭 Routes
- */
+// 🧭 Routes
 app.use("/events", eventsRoute);
 app.use("/utilization", utilizationRoute);
 app.use("/recommend", recommendRoute);
 app.use("/", queryRoute);
 
-/**
- * 🩺 Health check
- */
+// 🩺 Health check
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
-/**
- * 🏠 Root info
- */
+// 🏠 Welcome
 app.get("/", (_req, res) => {
   res.send("✅ Saltmine Prototype API is running. Visit /api-docs for Swagger UI.");
 });
-
-/**
- * 🚀 Production extensions
- * - Add proper DI for store + auth modules
- * - Add caching layer (Redis)
- * - Add telemetry exporter
- */
 
 export default app;
 

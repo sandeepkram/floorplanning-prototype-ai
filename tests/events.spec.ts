@@ -3,7 +3,12 @@ import app from "../src/server.js";
 
 describe("Events API", () => {
   test("GET /events should return array", async () => {
-    const res = await request(app).get("/events?tenant_id=bankcorp");
+    const res = await request(app)
+      .get("/events?tenant_id=bankcorp")
+      .set("x-user-role", "admin")
+      .set("x-user-region", "IN")
+      .set("x-tenant-id", "bankcorp");
+
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
@@ -17,7 +22,13 @@ describe("Events API", () => {
       present: true,
       people_count: 3,
     };
-    const res = await request(app).post("/events").send(event);
+    const res = await request(app)
+      .post("/events")
+      .set("x-user-role", "admin")
+      .set("x-user-region", "IN")
+      .set("x-tenant-id", "bankcorp")
+      .send(event);
+
     expect([200, 201]).toContain(res.status);
   });
 });

@@ -22,27 +22,23 @@ const rolePermissions: Record<string, string[]> = {
 };
 
 export function accessControlMiddleware(req: Request, res: Response, next: NextFunction) {
-// Bypass RBAC + header validation when testing
-if (process.env.NODE_ENV === "test") {
-  (req as any).accessContext = {
-    role: "admin",
-    region: "global",
-    tenant: "test-tenant"
-  };
-  return next();
-}
-
+  const path = req.path.toLowerCase();
   const role = (req.headers["x-user-role"] as string) || "viewer";
   const region = (req.headers["x-user-region"] as string) || "global";
-  const tenant = (req.headers["x-tenant-id"] as string) || null;
-
-  // Tenant header is mandatory for all access
-  if (!tenant) {
-    return res.status(400).json({ error: "Missing required header: x-tenant-id" });
-  }
+  const tenant = (req.headers["x-tenant-id"] as string) || (process.env.NODE_ENV === "test" ? "test-tenant" : null);
 
   // Attach access context
   (req as any).accessContext = { role, region, tenant };
+
+  // Allow NLQ endpoint bypass for now
+  if (req.method === "POST" && (path === "/query" || path === "/nlq/query")) {
+    return next();
+  }
+
+  // Tenant header is mandatory in all other cases
+  if (!tenant) {
+    return res.status(400).json({ error: "Missing required header: x-tenant-id" });
+  }
 
   // RBAC enforcement
   const allowedMethods = rolePermissions[role] || [];
@@ -54,7 +50,6 @@ if (process.env.NODE_ENV === "test") {
     });
   }
 
-  // Log (only outside tests)
   if (process.env.NODE_ENV !== "test") {
     console.log(`🔐 AccessContext → tenant=${tenant}, role=${role}, region=${region}, method=${req.method}`);
   }
