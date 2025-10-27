@@ -8,33 +8,40 @@ import { Request, Response, NextFunction } from "express";
  * - Applies lightweight RBAC permissions (per route)
  * - Attaches accessContext to req for downstream logic
  *
- * 🔧 Future enhancement:
- * Move rolePermissions to a config file or policy engine
- * (e.g., Casbin, Oso, or custom RBAC registry).
+ * ✅ Environment-smart RBAC
+ * - Local/Render: viewer allowed POST for demo convenience
+ * - Test/Production: viewer read-only (GET only)
  */
 
 // ------------------------------------------------------------
-// RBAC Permission Matrix
+// 🌐 Environment-Sensitive Permission Matrix
 // ------------------------------------------------------------
-// Define which HTTP methods each role can use.
-// ⛔️ NOTE: In production, viewer should be ["GET"] only.
-// ✅ Temporarily allowing ["GET", "POST"] for testing Swagger.
-// ------------------------------------------------------------
+
+// Viewer permission changes automatically by environment
+const viewerPermissions =
+  process.env.NODE_ENV === "test" || process.env.NODE_ENV === "production"
+    ? ["GET"]           // Strict: for CI & production demos
+    : ["GET", "POST"];  // Relaxed: for local dev & Swagger demo
+
+// Core role-permission definitions
 const rolePermissions: Record<string, string[]> = {
   admin:   ["GET", "POST", "PUT", "DELETE"],
   analyst: ["GET", "POST"],
   seller:  ["GET", "POST"],
-  viewer:  ["GET", "POST"], // 👈 TEMP: allow POST for viewers during dev/test
+  viewer:  viewerPermissions,
 };
 
-export function accessControlMiddleware(req: Request, res: Response, next: NextFunction) {
+// ------------------------------------------------------------
+// 🧩 Middleware Implementation
+// ------------------------------------------------------------
+export function accessControlMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   const path = req.path.toLowerCase();
-  const role =
-    (req.headers["x-user-role"] as string) ||
-    "viewer"; // default to viewer if missing
-  const region =
-    (req.headers["x-user-region"] as string) ||
-    "global"; // default region
+  const role = (req.headers["x-user-role"] as string) || "viewer";
+  const region = (req.headers["x-user-region"] as string) || "global";
   const tenant =
     (req.headers["x-tenant-id"] as string) ||
     (process.env.NODE_ENV === "test" ? "test-tenant" : null);
@@ -42,28 +49,20 @@ export function accessControlMiddleware(req: Request, res: Response, next: NextF
   // Attach access context for downstream services
   (req as any).accessContext = { role, region, tenant };
 
-  // ----------------------------------------------------------------
-  // 1️⃣ Allow NLQ / query endpoints to bypass RBAC temporarily
-  // ----------------------------------------------------------------
+  // 1️⃣ Allow NLQ / Query endpoints to bypass RBAC for now
   if (req.method === "POST" && (path === "/query" || path === "/nlq/query")) {
     return next();
   }
 
-  // ----------------------------------------------------------------
   // 2️⃣ Enforce presence of tenant header in all other cases
-  // ----------------------------------------------------------------
   if (!tenant) {
     return res.status(400).json({
       error: "Missing required header: x-tenant-id",
     });
   }
 
-  // ----------------------------------------------------------------
   // 3️⃣ Apply role-based method restriction
-  // ----------------------------------------------------------------
   const allowedMethods = rolePermissions[role] || [];
-
-  // If method not allowed for this role → block it
   if (!allowedMethods.includes(req.method)) {
     return res.status(403).json({
       error: "Forbidden: insufficient role permissions",
@@ -72,18 +71,14 @@ export function accessControlMiddleware(req: Request, res: Response, next: NextF
     });
   }
 
-  // ----------------------------------------------------------------
-  // 4️⃣ Optional: Console audit for visibility in non-test env
-  // ----------------------------------------------------------------
+  // 4️⃣ Optional: Log access context for visibility
   if (process.env.NODE_ENV !== "test") {
     console.log(
       `🔐 AccessContext → tenant=${tenant}, role=${role}, region=${region}, method=${req.method}`
     );
   }
 
-  // ----------------------------------------------------------------
   // 5️⃣ Continue to next middleware / route
-  // ----------------------------------------------------------------
   next();
 }
 
@@ -92,10 +87,6 @@ export function accessControlMiddleware(req: Request, res: Response, next: NextF
  * --------------------------------
  * 1️⃣ Move `rolePermissions` to /config/rbac.config.ts for central policy management
  * 2️⃣ Add role hierarchy (admin > analyst > seller > viewer)
- * 3️⃣ Optionally add declarative JSON/YAML policy:
- *      {
- *        "seller": { "allow": ["/events:GET", "/events:POST"] },
- *        "viewer": { "allow": ["/events:GET"] }
- *      }
- * 4️⃣ Integrate with an external IAM system or JWT claims
+ * 3️⃣ Optionally use declarative JSON/YAML policy
+ * 4️⃣ Integrate with IAM/JWT claims later
  */
