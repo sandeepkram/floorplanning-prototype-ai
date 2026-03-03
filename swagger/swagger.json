@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Saltmine Prototype API \u2013 V5 (SQLite + RBAC + NLQ)",
+    "title": "FloorDoc API \u2013 V5 (SQLite + RBAC + NLQ)",
     "version": "1.0.0",
     "description": "Multi-tenant API for occupancy events, utilization metrics, and recommendations.\nSupports SQLite or in-memory store for demo purposes.\nRBAC and NLQ are included in the V5 branch."
   },
@@ -11,7 +11,7 @@
       "description": "Local Development Environment"
     },
     {
-      "url": "https://saltmine-prototype.onrender.com",
+      "url": "https://floordoc-api.onrender.com",
       "description": "Render Production Deployment"
     },
     {

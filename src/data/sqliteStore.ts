@@ -8,7 +8,7 @@ import { seedEvents } from "../data/tenantData.js";
 export class SqliteStore {
   private db: Database.Database;
 
-  constructor(filePath = "./data/saltmine.db") {
+  constructor(filePath = process.env.FLOORDOC_DB_PATH || "./data/floordoc.db") {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     this.db = new Database(filePath);

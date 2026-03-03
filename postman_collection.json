@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Saltmine Prototype API \u2013 V5 (SQLite + RBAC + NLQ)",
+    "name": "FloorDoc API \u2013 V5 (SQLite + RBAC + NLQ)",
     "_postman_id": "55cc5b45-89a1-4eb7-a5c2-b62599268e7d",
-    "description": "Comprehensive Postman collection for the Saltmine Prototype API V5 (SQLite default, optional In-Memory, lightweight RBAC, NLQ /query). Includes examples and test scripts.",
+    "description": "Comprehensive Postman collection for the FloorDoc API V5 (SQLite default, optional In-Memory, lightweight RBAC, NLQ /query). Includes examples and test scripts.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -13,7 +13,7 @@
     },
     {
       "key": "render_url",
-      "value": "https://saltmine-prototype.onrender.com",
+      "value": "https://floordoc-api.onrender.com",
       "type": "string"
     },
     {
