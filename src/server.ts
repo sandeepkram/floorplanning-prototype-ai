@@ -34,8 +34,8 @@ app.use(morgan("dev"));
 
 // 🌐 CORS Configuration (handles localhost, Render, and dynamic GitHub Codespaces)
 const allowedOrigins = [
-  "http://localhost:8080",                             // Local
-  "https://saltmine-prototype.onrender.com"            // Render Deployment
+  "http://localhost:8080",                             // Local  
+  "https://floordoc-api-production.up.railway.app"     // Railway Deployment
 ];
 
 app.use(cors({
@@ -67,7 +67,7 @@ app.use(express.json());
 // 🩺 Healthcheck & Base routes FIRST (no tenant header required)
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.get("/", (_req, res) => {
-  res.send("✅ Saltmine Prototype API is running. Visit /api-docs for Swagger UI.");
+  res.send("✅ FloorDoc API is running. Visit /api-docs for Swagger UI.");
 });
 app.use(baseRoutes);
 
@@ -164,7 +164,7 @@ export default app;
 if (process.env.NODE_ENV !== "test") {
   const port = Number(process.env.PORT || 8080);
   app.listen(port, () => {
-    console.log(`Saltmine Prototype API listening on port ${port}`);
+    console.log(`FloorDoc API listening on port ${port}`);
     console.log(`Swagger UI available at http://localhost:${port}/api-docs`);
   });
 }

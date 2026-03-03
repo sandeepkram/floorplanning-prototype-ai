@@ -1,4 +1,4 @@
-# Saltmine Prototype API – V5 (Enhanced with SQLite & RBAC)
+# FloorDoc API – V5 (Enhanced with SQLite & RBAC)
 
 _A modular Node.js + TypeScript REST API for workspace intelligence, integrating event analytics, utilization scoring, and role-aware recommendations._
 
@@ -20,7 +20,7 @@ _A modular Node.js + TypeScript REST API for workspace intelligence, integrating
 
 ## 🧭 Overview
 
-The **Saltmine Prototype API – V5** demonstrates a modular RESTful architecture combining multi-tenancy, RBAC-driven access, and flexible persistence layers (SQLite or in-memory).  
+The **FloorDoc API – V5** demonstrates a modular RESTful architecture combining multi-tenancy, RBAC-driven access, and flexible persistence layers (SQLite or in-memory).  
 It supports:
 - Dynamic event ingestion (`/events`, `/event`)
 - Utilization and recommendation analytics (`/utilization`, `/recommend`)
@@ -172,7 +172,7 @@ Logs include:
 
 ```
           ┌───────────────────────────────┐
-          │      Saltmine Prototype API   │
+          │      FloorDoc API             │
           ├───────────────────────────────┤
           │        Express + TypeScript   │
           │───────────────────────────────│
@@ -202,4 +202,4 @@ Logs include:
 
 ## 📜 License
 
-MIT © 2025 Saltmine Prototype
+MIT © 2025 FloorDoc

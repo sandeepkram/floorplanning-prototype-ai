@@ -32,4 +32,4 @@ jobs:
 
       # Optional: Docker build stage (disabled for now)
       # - name: Docker build (no push)
-      #   run: docker build -t saltmine-prototype-api:ci .
+      #   run: docker build -t floordoc-api:ci .
