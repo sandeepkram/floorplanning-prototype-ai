@@ -1,6 +1,5 @@
 import express from 'express';
 import { eventSchema } from '../utils/validation.js';
-import { addEvent } from '../services/dataStore.js';
 import { store } from '../data/storefactory.js';
 
 const router = express.Router();
@@ -19,7 +18,7 @@ router.post('/', (req, res) => {
       });
     }
 
-    addEvent(parsed.data);
+    store.saveEvent(parsed.data);
     return res.status(201).json({ ok: true });
   } catch (err) {
     console.error('❌ Events API POST error:', err);
@@ -38,7 +37,7 @@ router.post('', (req, res) => {
       });
     }
 
-    addEvent(parsed.data);
+    store.saveEvent(parsed.data);
     return res.status(201).json({ ok: true });
   } catch (err) {
     console.error('❌ Events API POST (alias) error:', err);

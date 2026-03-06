@@ -193,8 +193,10 @@ Logs include:
 
 ## ⚠️ Known Issues & TODOs
 
-- [ ] Fix `api.test.ts` singular `/event` 404 failure.
-- [ ] Investigate RBAC viewer rejection returning `201` instead of `403`.
+- [x] Fix `api.test.ts` singular `/event` 404 failure — resolved by routing POST through `store.saveEvent()`.
+- [x] Investigate RBAC viewer rejection returning `201` instead of `403` — confirmed working; `getRolePermissions()` correctly enforces read-only for viewers in test/production.
+- [x] Fix triple store instantiation — `server.ts`, `setup.ts`, and `storefactory.ts` now share a single `store` singleton.
+- [x] Fix `POST /events` writing to legacy in-memory store instead of the active data store.
 - [ ] Confirm documentation on SQLite vs InMemory modes remains in sync with store factory behavior.
 - [ ] Validate Swagger and Postman collections after next merge.
 

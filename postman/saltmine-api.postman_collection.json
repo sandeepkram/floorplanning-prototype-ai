@@ -1,179 +1,124 @@
 {
   "info": {
-    "name": "Saltmine Prototype API \u2014 V1",
+    "name": "FloorDoc API — V5",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "GET Users (bankcorp)",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "http://localhost:8080/api/bankcorp/users",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "bankcorp",
-            "users"
-          ]
-        }
-      }
-    },
-    {
-      "name": "POST User (header tenant: bankcorp)",
+      "name": "POST /events — Create occupancy event",
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "x-tenant-id",
-            "value": "bankcorp"
-          }
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-tenant-id", "value": "bankcorp" },
+          { "key": "x-user-role", "value": "admin" }
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\"name\": \"New User\", \"role\": \"Analyst\"}"
+          "raw": "{\n  \"tenant_id\": \"bankcorp\",\n  \"room_id\": \"conf_A\",\n  \"timestamp\": \"2025-01-01T10:00:00Z\",\n  \"people_count\": 3,\n  \"office_id\": \"blr_finops\"\n}"
         },
         "url": {
-          "raw": "http://localhost:8080/api/users",
+          "raw": "http://localhost:8080/events",
           "protocol": "http",
-          "host": [
-            "localhost"
-          ],
+          "host": ["localhost"],
           "port": "8080",
-          "path": [
-            "api",
-            "users"
+          "path": ["events"]
+        }
+      }
+    },
+    {
+      "name": "GET /events — List events for tenant",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "x-tenant-id", "value": "bankcorp" },
+          { "key": "x-user-role", "value": "viewer" }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/events?tenant_id=bankcorp",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["events"],
+          "query": [
+            { "key": "tenant_id", "value": "bankcorp" }
           ]
         }
       }
     },
     {
-      "name": "GET Accounts (bankcorp)",
+      "name": "GET /utilization — Room utilization metrics",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "x-tenant-id", "value": "bankcorp" },
+          { "key": "x-user-role", "value": "analyst" }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/utilization?tenant_id=bankcorp&room_id=conf_A",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["utilization"],
+          "query": [
+            { "key": "tenant_id", "value": "bankcorp" },
+            { "key": "room_id", "value": "conf_A" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /recommend — Underutilized room recommendations",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "x-tenant-id", "value": "bankcorp" },
+          { "key": "x-user-role", "value": "analyst" }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/recommend?tenant_id=bankcorp&office_id=blr_finops",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["recommend"],
+          "query": [
+            { "key": "tenant_id", "value": "bankcorp" },
+            { "key": "office_id", "value": "blr_finops" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /query — Natural language query",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-user-role", "value": "analyst" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"q\": \"recommend rooms for blr_finops in bankcorp\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/query",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["query"]
+        }
+      }
+    },
+    {
+      "name": "GET /health — Liveness probe",
       "request": {
         "method": "GET",
         "url": {
-          "raw": "http://localhost:8080/api/bankcorp/accounts",
+          "raw": "http://localhost:8080/health",
           "protocol": "http",
-          "host": [
-            "localhost"
-          ],
+          "host": ["localhost"],
           "port": "8080",
-          "path": [
-            "api",
-            "bankcorp",
-            "accounts"
-          ]
-        }
-      }
-    },
-    {
-      "name": "POST Account (bankcorp)",
-      "request": {
-        "method": "POST",
-        "body": {
-          "mode": "raw",
-          "raw": "{\"type\": \"Savings\", \"balance\": 999}"
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/bankcorp/accounts",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "bankcorp",
-            "accounts"
-          ]
-        }
-      }
-    },
-    {
-      "name": "GET Products (retailx)",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "http://localhost:8080/api/retailx/products",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "retailx",
-            "products"
-          ]
-        }
-      }
-    },
-    {
-      "name": "POST Product (retailx)",
-      "request": {
-        "method": "POST",
-        "body": {
-          "mode": "raw",
-          "raw": "{\"sku\": \"SKU-010\", \"name\": \"Charger\", \"price\": 499}"
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/retailx/products",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "retailx",
-            "products"
-          ]
-        }
-      }
-    },
-    {
-      "name": "GET Patients (healthplus)",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "http://localhost:8080/api/healthplus/patients",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "healthplus",
-            "patients"
-          ]
-        }
-      }
-    },
-    {
-      "name": "POST Patient (healthplus)",
-      "request": {
-        "method": "POST",
-        "body": {
-          "mode": "raw",
-          "raw": "{\"name\": \"Ravi\", \"condition\": \"COPD\"}"
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/healthplus/patients",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "healthplus",
-            "patients"
-          ]
+          "path": ["health"]
         }
       }
     }

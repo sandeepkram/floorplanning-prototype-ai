@@ -14,10 +14,7 @@ export class InMemoryStore {
   private roomsByOffice = new Map<OfficeKey, Set<string>>();
   private events: any[] = [];   // ✅ define events array for in-memory data
 
-  constructor() {
-    // Pre-seed lightweight demo data (same as SQLite seed)
-    this.seed();
-  }
+  constructor() {}
 
   /** Store a new occupancy event */
   saveEvent(ev: OccupancyEvent) {
@@ -57,9 +54,11 @@ export class InMemoryStore {
     }
   }
 
-  clear() {
-  console.log('🧹 Clearing InMemory store...');
-  this.events = [];
-}
+  async clear() {
+    console.log('🧹 Clearing InMemory store...');
+    this.events = [];
+    this.eventsByRoom = new Map();
+    this.roomsByOffice = new Map();
+  }
 
 }

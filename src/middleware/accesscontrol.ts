@@ -17,19 +17,21 @@ import { Request, Response, NextFunction } from "express";
 // 🌐 Environment-Sensitive Permission Matrix
 // ------------------------------------------------------------
 
-// Viewer permission changes automatically by environment
-const viewerPermissions =
-  process.env.NODE_ENV === "test" || process.env.NODE_ENV === "production"
-    ? ["GET"]           // Strict: for CI & production demos
-    : ["GET", "POST"];  // Relaxed: for local dev & Swagger demo
+// Evaluated per-request so NODE_ENV changes at runtime/test take effect
+function getRolePermissions(): Record<string, string[]> {
+  const env = process.env.NODE_ENV;
+  const viewerPermissions =
+    env === "test" || env === "production"
+      ? ["GET"]           // Strict: for CI & production demos
+      : ["GET", "POST"];  // Relaxed: for local dev & Swagger demo
 
-// Core role-permission definitions
-const rolePermissions: Record<string, string[]> = {
-  admin:   ["GET", "POST", "PUT", "DELETE"],
-  analyst: ["GET", "POST"],
-  seller:  ["GET", "POST"],
-  viewer:  viewerPermissions,
-};
+  return {
+    admin:   ["GET", "POST", "PUT", "DELETE"],
+    analyst: ["GET", "POST"],
+    seller:  ["GET", "POST"],
+    viewer:  viewerPermissions,
+  };
+}
 
 // ------------------------------------------------------------
 // 🧩 Middleware Implementation
@@ -62,7 +64,7 @@ export function accessControlMiddleware(
   }
 
   // 3️⃣ Apply role-based method restriction
-  const allowedMethods = rolePermissions[role] || [];
+  const allowedMethods = getRolePermissions()[role] || [];
   if (!allowedMethods.includes(req.method)) {
     return res.status(403).json({
       error: "Forbidden: insufficient role permissions",

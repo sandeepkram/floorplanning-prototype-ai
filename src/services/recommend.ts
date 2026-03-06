@@ -22,8 +22,8 @@ export function getRecommendations(tenant: TenantId, officeId: string) {
     const util = getRoomUtilization(tenant, room_id);
     return {
       room_id,
-      utilization_pct: util.avg7 ?? 0,
-      total_events: util.totalEvents ?? 0,
+      utilization_pct: util.average_people ?? 0,
+      total_events: util.total_events ?? 0,
     };
   });
 

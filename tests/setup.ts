@@ -1,6 +1,5 @@
-import { createStore } from '../src/data/storefactory.js';
-
-const store = createStore();
+process.env.NODE_ENV = "test";
+import { store } from '../src/data/storefactory.js';
 
 beforeAll(async () => {
   if ('seed' in store && typeof (store as any).seed === 'function') {
