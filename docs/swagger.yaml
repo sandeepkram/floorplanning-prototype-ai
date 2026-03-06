@@ -10,8 +10,8 @@ info:
 servers:
 - url: http://localhost:8080
   description: Local Development Environment
-- url: https://floordoc-api.onrender.com
-  description: Render Production Deployment
+- url: https://floordoc-api-production.up.railway.app
+  description: Railway Production Deployment
 - url: https://YOUR-CODESPACE-NAME-8080.app.github.dev
   description: GitHub Codespaces (replace YOUR-CODESPACE-NAME with the active codespace
     host)
@@ -225,9 +225,9 @@ paths:
               examples:
                 sample:
                   value:
-                    avg7: 3.2
-                    max30: 8
-                    totalEvents: 12
+                    average_people: 3.2
+                    peak_people: 8
+                    total_events: 12
         '404':
           description: Not found
           content:
@@ -279,9 +279,9 @@ paths:
               examples:
                 sample:
                   value:
-                    avg7: 3.2
-                    max30: 8
-                    totalEvents: 12
+                    average_people: 3.2
+                    peak_people: 8
+                    total_events: 12
         '404':
           description: Not found
           content:
@@ -441,9 +441,11 @@ paths:
               examples:
                 sample:
                   value:
-                    intent: recommend
-                    tenant: bankcorp
-                    office: blr_finops
+                    context:
+                      tenant: bankcorp
+                      role: analyst
+                      region: global
+                    query: recommend rooms for blr_finops in bankcorp
                     result:
                       underutilized_rooms:
                       - room_id: conf_A
@@ -463,27 +465,6 @@ paths:
       responses:
         '200':
           description: OK
-  /teardown:
-    post:
-      tags:
-      - Ops / Health
-      summary: Teardown seeded test data
-      description: Clears locally seeded events. For local/test only.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TeardownRequest'
-            examples:
-              confirm:
-                value:
-                  confirm: true
-      responses:
-        '200':
-          description: Teardown completed
-        '403':
-          description: Not allowed
   /api-docs:
     get:
       tags:
@@ -534,15 +515,18 @@ components:
     UtilizationResult:
       type: object
       properties:
-        avg7:
+        average_people:
           type: number
           example: 3.2
-        max30:
+        peak_people:
           type: number
           example: 8
-        totalEvents:
+        total_events:
           type: integer
           example: 12
+        message:
+          type: string
+          example: No events found
     RecommendationRoom:
       type: object
       properties:
@@ -579,37 +563,14 @@ components:
     QueryResponse:
       type: object
       properties:
-        intent:
+        context:
+          type: object
+          description: Resolved user context from request headers
+        query:
           type: string
-          example: recommend
-        tenant:
-          type: string
-          example: bankcorp
-        office:
-          type: string
-          example: blr_finops
+          example: recommend rooms for blr_finops in bankcorp
         result:
           type: object
-          properties:
-            underutilized_rooms:
-              type: array
-              items:
-                type: object
-                properties:
-                  room_id:
-                    type: string
-                    example: conf_A
-                  score:
-                    type: number
-                    example: 0.71
-    TeardownRequest:
-      type: object
-      required:
-      - confirm
-      properties:
-        confirm:
-          type: boolean
-          example: true
     ErrorResponse:
       type: object
       properties:

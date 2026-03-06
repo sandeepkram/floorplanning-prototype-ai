@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import YAML from "yamljs";
 import swaggerUi from "swagger-ui-express";
 
-import { createStore } from "./data/storefactory.js";
+import { store } from "./data/storefactory.js";
 import { contextMiddleware } from "./middleware/context.js";
 import { accessControlMiddleware } from "./middleware/accesscontrol.js";
 import { requireTenantHeader } from "./middleware/requiretenant.js";
@@ -17,8 +17,7 @@ import recommendRoute from "./routes/recommend.js";
 import queryRoute from "./routes/query.js";
 import baseRoutes from "./routes/baseroutes.js";
 
-// 🗃 Initialize the SQLite or InMemory store
-const store = createStore();
+// 🗃 Seed the store on startup
 if ("seed" in store && typeof (store as any).seed === "function") {
   try {
     (store as any).seed();
@@ -81,35 +80,18 @@ const swaggerDocument = YAML.load(swaggerPath);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/swagger-ui", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+// 🧩 Backward-compat alias: /event → /events (must be BEFORE tenant enforcement)
+app.all(/^\/event(\/.*)?$/, (req, res, next) => {
+  req.url = req.url.replace(/^\/event/, "/events");
+  next();
+});
+
 // 🔐 Tenant enforcement (applies only after exempt routes)
 app.use(requireTenantHeader);
 
 // 🔐 Context & Access Control (RBAC)
 app.use(contextMiddleware);
 app.use(accessControlMiddleware);
-
-// 🧩 Compatibility Aliases for all major endpoints
-// -----------------------------------------------------
-// These allow Swagger/Jest to call singular endpoints
-// even if the Express route uses plural names internally.
-
-// /event → /events
-app.all(/^\/event(\/.*)?$/, (req, res, next) => {
-  req.url = req.url.replace(/^\/event/, "/events");
-  next();
-});
-
-// /utilization → /utilizations
-app.all(/^\/utilization(\/.*)?$/, (req, res, next) => {
-  req.url = req.url.replace(/^\/utilization/, "/utilizations");
-  next();
-});
-
-// /recommend → /recommendations
-app.all(/^\/recommend(\/.*)?$/, (req, res, next) => {
-  req.url = req.url.replace(/^\/recommend/, "/recommendations");
-  next();
-});
 
 // 🧪 Test-only endpoint for seed injection (bypasses RBAC for testing)
 app.post("/test-event", (req, res) => {
@@ -138,8 +120,8 @@ app.post("/test-event", (req, res) => {
 
 // 🧭 Primary protected routes (tenant header required)
 app.use("/events", eventsRoute);
-app.use("/utilizations", utilizationRoute);
-app.use("/recommendations", recommendRoute);
+app.use("/utilization", utilizationRoute);
+app.use("/recommend", recommendRoute);
 app.use("/", queryRoute);
 
 // ⚙️ Optional: /whoami endpoint for RBAC / Tenant debugging

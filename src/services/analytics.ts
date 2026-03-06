@@ -103,8 +103,7 @@ export function getRoomUtilization(tenant: TenantId, roomId: string) {
   const events: OccupancyEvent[] = store.getRoomEvents(tenant, roomId);
 
   if (!events.length) {
-    return { avg7: 0, max30: 0, totalEvents: 0, message: "No events found" };
-    
+    return { average_people: 0, peak_people: 0, total_events: 0, message: "No events found" };
   }
 
   const now = Date.now();

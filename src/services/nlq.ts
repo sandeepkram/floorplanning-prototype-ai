@@ -48,8 +48,8 @@ export async function nlqAnswer(ctx: UserContext, q: string) {
         const util = getRoomUtilization(tenant, room);
         return {
           room_id: room,
-          utilization_pct: util.avg7 ?? 0,
-          total_events: util.totalEvents ?? 0,
+          utilization_pct: util.average_people ?? 0,
+          total_events: util.total_events ?? 0,
         };
       })
       .sort((a, b) => a.utilization_pct - b.utilization_pct);
